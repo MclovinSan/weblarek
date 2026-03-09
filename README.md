@@ -121,14 +121,14 @@ Presenter - презентер содержит основную логику п
 `phone: string;`
 `address: string;`
 
-#### Интерфейс IGet
+#### Интерфейс IProductsResponse
 - Содержит типы данных для получения с сервера
 
 типы данных:
 `total: number;`
 `items: IProduct[];`
 
-#### Интерфейс IPost
+#### Интерфейс IOrder
 - Содержит типы данных пользователя для отправки на сервер
 
 Включает в себя интерфейс IBuyer
@@ -139,6 +139,13 @@ Presenter - презентер содержит основную логику п
 `address: string;`
 `total: number;`
 `items: string[];`
+
+#### Интерфейс IOrderSuccesResponse
+- Содержит типы данных ответа после отправки на сервер данных пользователя
+
+Типы данных:
+`id: string;`
+`total: number;`
 
 ### Модели данных
 
@@ -202,4 +209,4 @@ Presenter - презентер содержит основную логику п
 
 методы: 
 `getProduct(): Promise<IProduct[]>` - возвращает промис с массивом товаров
-`postOrder(order: IPost): Promise<object>` - отправляет данные пользователя на сервер
+`postOrder(order: IPost): Promise<IOrderSuccesResponse>` - отправляет данные пользователя на сервер
