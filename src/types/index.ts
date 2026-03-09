@@ -22,12 +22,17 @@ export interface IBuyer {
     address: string;
 }
 
-export interface IGet {
+export interface IProductsResponse {
     total: number;
     items: IProduct[];
 }
 
-export interface IPost extends IBuyer {
+export interface IOrder extends IBuyer {
     total: number;
     items: string[];
+}
+
+export interface IOrderSuccesResponse {
+    id: string;
+    total: number;
 }

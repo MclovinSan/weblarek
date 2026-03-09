@@ -1,4 +1,4 @@
-import { IProduct } from "../../../types";
+import { IProduct } from "../../types";
 import { BaseProductsModel } from "./BaseProductsModel"
 
 export class Cart extends BaseProductsModel<IProduct> {
