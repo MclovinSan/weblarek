@@ -1,4 +1,5 @@
 import { IBuyer } from "../../types"
+import { IEvents } from "../base/Events";
 
 const FIELD_ERRORS: Record<keyof IBuyer, string> = {
   payment: 'Не выбран вид оплаты',
@@ -13,12 +14,16 @@ export class Buyer{
   private _phone: string = '';
   private _address: string = '';
 
+   constructor(protected events: IEvents) {
+   }
+
   setBuyerData(data: Partial<IBuyer>): void {
-  if (data.payment !== undefined) this._payment = data.payment;
-  if (data.email !== undefined) this._email = data.email;
-  if (data.phone !== undefined) this._phone = data.phone;
-  if (data.address !== undefined) this._address = data.address;
-}
+    if (data.payment !== undefined) this._payment = data.payment;
+    if (data.email !== undefined) this._email = data.email;
+    if (data.phone !== undefined) this._phone = data.phone;
+    if (data.address !== undefined) this._address = data.address;
+    this.events.emit('buyerData:change')
+  }
 
   getBuyerData(): IBuyer {
     return {
@@ -34,6 +39,7 @@ export class Buyer{
     this._email = '';
     this._phone = '';
     this._address = '';
+    this.events.emit('buyerData:change');
   }
 
   validateData(data: IBuyer) {
