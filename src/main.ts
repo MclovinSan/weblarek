@@ -9,7 +9,7 @@ import { EventEmitter } from './components/base/Events';
 import { Gallery } from './components/View/Gallery';
 import { CardCatalog } from './components/View/CardCatalog';
 import { cloneTemplate, ensureElement } from './utils/utils';
-import { IBuyer, IProduct } from './types';
+import { IBuyer, IOrderSuccesResponse, IProduct } from './types';
 import { CardPreview } from './components/View/CardPreview';
 import { Modal } from './components/View/Modal';
 import { Header } from './components/View/Header';
@@ -28,6 +28,11 @@ const buyerModel = new Buyer(events);
 const header = new Header(events, ensureElement<HTMLElement>('.header'))
 const gallery = new Gallery(document.body)
 const modal = new Modal(ensureElement<HTMLElement>('#modal-container'));
+const cardPreview = new CardPreview(cloneTemplate('#card-preview'),events);
+const basket = new Basket(cloneTemplate('#basket'),{ onClick: () => events.emit('order:open') })
+const order = new OrderForm(cloneTemplate('#order'), events)
+const contacts = new ContactsForm(cloneTemplate('#contacts'), events);
+const success = new Success(cloneTemplate('#success'), events)
 
 const baseApi = new Api(API_URL);
 const larekApi = new LarekApi(baseApi);
@@ -52,19 +57,15 @@ events.on('card:select', (item: IProduct) => {
 })
 
 events.on('preview:changed', (item: IProduct) => {
-  const cardPreview = new CardPreview(
-    cloneTemplate('#card-preview'),
-    {
-      onClick: () => events.emit('actionCardButton:click', item)
-    }
-  )
   const card = cardPreview.render({ valid: cartModel.haveItem(item.id), ...item})
 
   modal.render({ content: card })
   modal.open()
 })
 
-events.on('actionCardButton:click', (item: IProduct) => {
+events.on('actionCardButton:click', () => {
+  const item = productsModel.getPreview()
+  if (!item) return;
   cartModel.haveItem(item.id) ? cartModel.deleteItem(item) : cartModel.addItem(item)
   modal.close()
 })
@@ -72,44 +73,30 @@ events.on('actionCardButton:click', (item: IProduct) => {
 events.on('basket:change', () => {
   const countItems = cartModel.countItems()
   header.render({ counter: countItems })
-})
 
-const renderBasket = () => {
-  const basket = new Basket(
-    cloneTemplate('#basket'),
-    {
-      onClick: () => events.emit('order:open')
-    }
-  )
-  
-  const products = cartModel.getItems()
-  const cards = products.map((item, index )=> {
+  const cards = cartModel.getItems().map((item, index )=> {
     const card = new CardBasket(
       cloneTemplate('#card-basket'),
       {
         onClick: () => {
           cartModel.deleteItem(item);
-          renderBasket()
         }
       }
     )
     return card.render({ ...item, index: index + 1})
   })
   
-  const modalContent = basket.render({ basketList: cards, totalPrice: cartModel.totalPrice()})
-  modal.render({ content: modalContent })
+  basket.render({ basketList: cards, totalPrice: cartModel.totalPrice()})
+})
+
+const renderBasket = () => {
+  modal.render({ content: basket.render() })
+  modal.open()
 }
 
 events.on('basket:open', () => {
   renderBasket()
-  modal.open()
 })
-
-const order = new OrderForm(cloneTemplate('#order'), events)
-
-const contacts = new ContactsForm(cloneTemplate('#contacts'), events);
-
-const success = new Success(cloneTemplate('#success'), events)
 
 events.on('order:open', () => {
   modal.render({
@@ -118,7 +105,6 @@ events.on('order:open', () => {
 });
 
 events.on('payment:change', (data: { value: IBuyer['payment']}) => {
-  order.payment = data.value
   buyerModel.setBuyerData({ payment: data.value })
 })
 
@@ -127,14 +113,7 @@ events.on('order.address:change', (data: { value: string }) => {
 })
 
 events.on('order:update', () => {
-  modal.render({
-    content: contacts.render({
-      email: '',
-      phone: '',
-      valid: false,
-      errors: ''
-    })
-  });
+  modal.render({content: contacts.render({})});
 });
 
 events.on('contacts.email:change', (data: { value: string }) => {
@@ -146,7 +125,8 @@ events.on('contacts.phone:change', (data: { value: string }) => {
 });
 
 events.on('buyerData:change', () => {
-  const errors = buyerModel.validateData(buyerModel.getBuyerData());
+  const errors = buyerModel.validate();
+  const buyer = buyerModel.getBuyerData()
 
   order.valid = !errors.payment && !errors.address;
   order.errors = Object.values({ payment: errors.payment, address: errors.address })
@@ -155,14 +135,33 @@ events.on('buyerData:change', () => {
   contacts.valid = !errors.email && !errors.phone;
   contacts.errors = Object.values({ email: errors.email, phone: errors.phone })
     .filter(i => !!i).join('. ');
+
+  order.payment = buyer.payment
+  order.address = buyer.address
+  contacts.email = buyer.email
+  contacts.phone = buyer.phone
 });
 
 events.on('contacts:update', () => {
-  modal.render({
-    content: success.render({ price: cartModel.totalPrice()})
-  });
-  cartModel.clearItems()
-  buyerModel.clearBuyerData()
+  const orderData = {
+    ...buyerModel.getBuyerData(),
+    items: cartModel.getItems().map(item => `${item.id}`),
+    total: cartModel.totalPrice()
+  }
+
+  larekApi.postOrder(orderData)
+    .then((result: IOrderSuccesResponse) => {
+      modal.render({
+      content: success.render({ price: result.total})
+      });
+      cartModel.clearItems()
+      buyerModel.clearBuyerData()
+    })
+    .catch(() => {
+      console.error('Ошибка сервера:');
+      
+      contacts.errors = 'Не удалось отправить заказ. Попробуйте позже.'
+    })
 });
 
 events.on('modal:close', () => {

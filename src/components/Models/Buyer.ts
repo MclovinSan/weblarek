@@ -1,54 +1,61 @@
 import { IBuyer } from "../../types"
 import { IEvents } from "../base/Events";
 
-const FIELD_ERRORS: Record<keyof IBuyer, string> = {
-  payment: 'Не выбран вид оплаты',
-  email: 'Укажите адрес электронной почты',
-  phone: 'Укажите номер телефона',
-  address: 'Укажите адрес'
-}
+type TErrors = Partial<Record<keyof IBuyer, string>>
 
 export class Buyer{
-  private _payment: IBuyer['payment'] = '';
-  private _email: string = '';
-  private _phone: string = '';
-  private _address: string = '';
+  private payment: IBuyer['payment'] = '';
+  private email: string = '';
+  private phone: string = '';
+  private address: string = '';
 
    constructor(protected events: IEvents) {
    }
 
   setBuyerData(data: Partial<IBuyer>): void {
-    if (data.payment !== undefined) this._payment = data.payment;
-    if (data.email !== undefined) this._email = data.email;
-    if (data.phone !== undefined) this._phone = data.phone;
-    if (data.address !== undefined) this._address = data.address;
+    if (data.payment !== undefined) this.payment = data.payment;
+    if (data.email !== undefined) this.email = data.email;
+    if (data.phone !== undefined) this.phone = data.phone;
+    if (data.address !== undefined) this.address = data.address;
     this.events.emit('buyerData:change')
   }
 
   getBuyerData(): IBuyer {
     return {
-      payment: this._payment,
-      email: this._email,
-      phone: this._phone,
-      address: this._address
+      payment: this.payment,
+      email: this.email,
+      phone: this.phone,
+      address: this.address
     }
   }
 
   clearBuyerData(): void {
-    this._payment = '';
-    this._email = '';
-    this._phone = '';
-    this._address = '';
+    this.payment = '';
+    this.email = '';
+    this.phone = '';
+    this.address = '';
     this.events.emit('buyerData:change');
   }
 
-  validateData(data: IBuyer) {
-    return Object.entries(data).reduce((acc, [key, value]) => {
-      if (value === '') {
-        const fieldname = key as keyof IBuyer
-        acc[key] = FIELD_ERRORS[fieldname] || `поле ${key} не заполнено`
-      }
-      return acc
-    },{} as Record<string, string>)
-  }
+  validate(): TErrors {
+    const errors: TErrors = {};
+
+    if (!this.payment) {
+        errors.payment = 'Выберите способ оплаты';
+    }
+
+    if (!this.address.trim()) {
+        errors.address = 'Укажите адрес';
+    }
+
+    if (!this.email.trim()) {
+        errors.email = 'Укажите email';
+    }
+
+    if (!this.phone.trim()) {
+        errors.phone = 'Укажите телефон';
+    }
+
+    return errors;
+}
 }

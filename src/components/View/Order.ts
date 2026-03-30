@@ -27,6 +27,10 @@ export class OrderForm extends Form<IOrderForm> {
         })
     }
 
+    set address(value: string) {
+      ensureElement<HTMLInputElement>('input[name="address"]', this.container).value = value
+    }
+
     set payment(value: string) {
       this.buttons.forEach(button => {
         button.classList.toggle('button_alt-active', button.name === value)

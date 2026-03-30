@@ -1,40 +1,43 @@
 import { IProduct } from "../../types";
-import { BaseProductsModel } from "./BaseProductsModel"
 import { IEvents } from "../base/Events";
 
-export class Cart extends BaseProductsModel<IProduct> {
+export class Cart{
+  protected products: IProduct[] = [];
 
   constructor(protected events: IEvents) {
-      super()
-    }
+  }
+
+  getItems(): IProduct[] {
+    return this.products
+  }
   
   addItem(product: IProduct): void {
-    this._products.push(product)
-    this.events.emit('basket:change', this._products)
+    this.products.push(product)
+    this.events.emit('basket:change', this.products)
   }
 
   deleteItem(product: IProduct): void {
-    this._products = this._products.filter(p => p.id !== product.id)
-    this.events.emit('basket:change', this._products)
+    this.products = this.products.filter(p => p.id !== product.id)
+    this.events.emit('basket:change', this.products)
   }
 
   clearItems(): void {
-    this._products = []
-    this.events.emit('basket:change', this._products)
+    this.products = []
+    this.events.emit('basket:change', this.products)
   }
 
   totalPrice(): number {
-    return this._products.reduce((acc, item) => {
+    return this.products.reduce((acc, item) => {
       acc += item.price || 0
       return acc
     }, 0) 
   }
 
   countItems(): number {
-    return this._products.length
+    return this.products.length
   }
 
   haveItem(id: string): boolean {
-    return this._products.some(p => p.id === id)
+    return this.products.some(p => p.id === id)
   }
 }

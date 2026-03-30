@@ -1,6 +1,7 @@
-import { ICardAction, IProduct } from "../../types";
+import { IProduct } from "../../types";
 import { categoryMap, CDN_URL } from "../../utils/constants";
 import { ensureElement } from "../../utils/utils";
+import { IEvents } from "../base/Events";
 import { Card } from "./Card";
 
 type ICardPreview = Pick<IProduct, 'description' | 'image' | 'category' | 'id'>
@@ -14,7 +15,7 @@ export class CardPreview extends Card<ICardPreview & valid> {
   protected imageEl: HTMLImageElement
   protected categoryEl: HTMLElement
 
-  constructor(container: HTMLElement, actions?: ICardAction) {
+  constructor(container: HTMLElement, events: IEvents) {
     super(container)
 
     this.descriptionEl = ensureElement<HTMLElement>('.card__text', this.container)
@@ -22,9 +23,9 @@ export class CardPreview extends Card<ICardPreview & valid> {
     this.imageEl = ensureElement<HTMLImageElement>('.card__image', this.container)
     this.categoryEl = ensureElement<HTMLElement>('.card__category', this.container)
 
-    if (actions?.onClick) {
-      this.actionButton.addEventListener('click', actions.onClick)
-    }
+    this.actionButton.addEventListener('click', () => {
+      events.emit('actionCardButton:click')
+    })
   }
 
   set image(value: string) {

@@ -1,29 +1,32 @@
 import { IProduct } from '../../types'
 import { IEvents } from '../base/Events';
-import { BaseProductsModel } from './BaseProductsModel';
 
-export class Products extends BaseProductsModel<IProduct>{
-  private _preview: IProduct | null = null;
+export class Products{
+  private preview: IProduct | null = null;
+  protected products: IProduct[] = [];
 
   constructor(protected events: IEvents) {
-    super()
+  }
+
+   getItems(): IProduct[] {
+    return this.products
   }
   
   setItems(items: IProduct[]): void {
-    this._products = items
+    this.products = items
     this.events.emit('items:changed')
   }
 
   getItemById(id: string): IProduct | undefined {
-    return this._products.find(p => p.id === id)
+    return this.products.find(p => p.id === id)
   }
 
   setPreview(product: IProduct): void {
-    this._preview = product
-    this.events.emit('preview:changed', this._preview)
+    this.preview = product
+    this.events.emit('preview:changed', this.preview)
   }
 
   getPreview(): IProduct | null {
-    return this._preview
+    return this.preview
   }
 }
