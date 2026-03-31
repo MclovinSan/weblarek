@@ -18,6 +18,7 @@ export class Basket extends Component<IBasket> {
       this.orderButton = ensureElement<HTMLButtonElement>('.basket__button', this.container)
       this.totalPriceEl = ensureElement<HTMLElement>('.basket__price', this.container)
       this.basketListEl = ensureElement<HTMLElement>('.basket__list', this.container)
+      this.orderButton.disabled = true
       
       if (actions?.onClick) {
         this.orderButton.addEventListener('click', actions.onClick)
